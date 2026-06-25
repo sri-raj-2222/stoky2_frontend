@@ -325,3 +325,16 @@
   text-align: center;
   margin-bottom: 28px;
 }
+
+.errorBanner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-size: 12.5px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  width: 100%;
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.4;
+}

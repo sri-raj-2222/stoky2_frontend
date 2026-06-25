@@ -241,12 +241,16 @@ export default function RegisterPage() {
     const result = await signUp(email.value, password.value, name.value);
 
     if (result.error) {
-      setServerError(result.error);
+      let friendlyError = result.error;
+      const lowerErr = result.error.toLowerCase();
+      if (lowerErr.includes("already registered") || lowerErr.includes("already exists") || lowerErr.includes("taken")) {
+        friendlyError = "An account with this email address already exists. Please log in or try a different email.";
+      }
+      setServerError(friendlyError);
       setSubmitting(false);
     } else {
-      // Supabase sends a confirmation email by default.
-      // Redirect to verify page.
-      router.push("/verify");
+      // Redirect directly to the dashboard since confirmations are disabled and user is logged in
+      router.push("/account");
     }
   };
 

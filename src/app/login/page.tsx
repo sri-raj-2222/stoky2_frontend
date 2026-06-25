@@ -97,7 +97,14 @@ export default function LoginPage() {
     const result = await signIn(email, password);
 
     if (result.error) {
-      setError(result.error);
+      let friendlyError = result.error;
+      const lowerErr = result.error.toLowerCase();
+      if (lowerErr.includes("invalid login credentials") || lowerErr.includes("invalid credentials")) {
+        friendlyError = "Invalid email or password. Please try again.";
+      } else if (lowerErr.includes("email not confirmed") || lowerErr.includes("confirm your email") || lowerErr.includes("verify")) {
+        friendlyError = "Email address has not been verified. Please check your inbox for the verification link.";
+      }
+      setError(friendlyError);
       setSubmitting(false);
     } else {
       // Successful login — redirect to home

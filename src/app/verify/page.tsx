@@ -11,6 +11,7 @@ import {
 } from "react";
 import Link from "next/link";
 import styles from "./verify.module.css";
+import { supabase } from "@/lib/supabase";
 
 const OTP_LENGTH = 6;
 const TIMER_SECONDS = 45;
@@ -23,12 +24,24 @@ export default function VerifyPage() {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [email, setEmail] = useState("");
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // The email could come from router state / context in production.
-  // Using a placeholder for the UI.
-  const email = "j***n@gmail.com";
+  // Load registered email on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const emailQuery = params.get("email");
+      if (emailQuery) {
+        setEmail(emailQuery);
+      } else {
+        const stored = sessionStorage.getItem("stoky_verify_email");
+        if (stored) setEmail(stored);
+      }
+    }
+  }, []);
 
   /* ── Countdown timer ───────────────────── */
 
@@ -43,21 +56,37 @@ export default function VerifyPage() {
   /* ── Auto-submit when filled ───────────── */
 
   const handleSubmit = useCallback(
-    (digits: string[]) => {
+    async (digits: string[]) => {
       if (verifying || verified) return;
       const code = digits.join("");
       if (code.length !== OTP_LENGTH) return;
 
       setVerifying(true);
       setError(false);
+      setServerError("");
 
-      // Simulated verification delay
-      setTimeout(() => {
+      try {
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          email,
+          token: code,
+          type: "signup",
+        });
+
+        if (otpError) {
+          setError(true);
+          setServerError(otpError.message);
+          setVerifying(false);
+        } else {
+          setVerifying(false);
+          setVerified(true);
+        }
+      } catch (err: any) {
+        setError(true);
+        setServerError(err.message || "Verification failed");
         setVerifying(false);
-        setVerified(true);
-      }, 1500);
+      }
     },
-    [verifying, verified]
+    [verifying, verified, email]
   );
 
   /* ── Input change ──────────────────────── */
@@ -175,8 +204,8 @@ export default function VerifyPage() {
           <p className={styles.successSubtext}>
             Your account has been verified successfully.
           </p>
-          <Link href="/login" className={styles.submitButton} style={{ textAlign: "center", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            Continue to Sign in
+          <Link href="/account" className={styles.submitButton} style={{ textAlign: "center", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            Go to My Account
           </Link>
         </div>
       </main>
@@ -207,6 +236,11 @@ export default function VerifyPage() {
           We sent a 6-digit code to{" "}
           <span className={styles.emailHighlight}>{email}</span>
         </p>
+
+        {/* Error message */}
+        {serverError && (
+          <div className={styles.errorBanner}>{serverError}</div>
+        )}
 
         {/* OTP boxes */}
         <div className={styles.otpRow}>
