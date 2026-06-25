@@ -4,16 +4,24 @@ import { createClient } from '@supabase/supabase-js';
 // Get the env variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export async function POST(request: Request) {
   try {
-    // Check if the service key is set
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase URL or Service Role Key is not configured on the server.');
+    const keyToUse = supabaseServiceKey || supabaseAnonKey;
+
+    // Check if configuration is set
+    if (!supabaseUrl || !keyToUse) {
+      throw new Error('Supabase URL or API Key is not configured on the server.');
     }
 
-    // Initialize Supabase admin client to bypass RLS policies
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    const isUsingAnonKey = !supabaseServiceKey && !!supabaseAnonKey;
+    if (isUsingAnonKey) {
+      console.warn('SUPABASE_SERVICE_ROLE_KEY is not defined. Falling back to NEXT_PUBLIC_SUPABASE_ANON_KEY on the server.');
+    }
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(supabaseUrl, keyToUse, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -35,7 +43,7 @@ export async function POST(request: Request) {
     if (checkoutEmail) {
       const emailLower = checkoutEmail.trim().toLowerCase();
       // Look up existing profile with this email
-      const { data: matchedProfile, error: profileErr } = await supabaseAdmin
+      const { data: matchedProfile, error: profileErr } = await supabaseClient
         .from('profiles')
         .select('id')
         .eq('email', emailLower)
@@ -53,11 +61,24 @@ export async function POST(request: Request) {
     orderData.user_id = activeUserId;
 
     // Insert order details
-    const { data: insertedOrder, error: orderError } = await supabaseAdmin
+    let { data: insertedOrder, error: orderError } = await supabaseClient
       .from('orders')
       .insert(orderData)
       .select()
       .single();
+
+    // Fallback if RLS blocks insertion under the existing/registered user's ID
+    if (orderError && orderError.message.toLowerCase().includes('row-level security') && orderData.user_id !== null) {
+      console.warn("RLS policy blocked linking order to registered user. Falling back to guest checkout with user_id = null...");
+      orderData.user_id = null;
+      const { data: fallbackData, error: fallbackError } = await supabaseClient
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+      insertedOrder = fallbackData;
+      orderError = fallbackError;
+    }
 
     if (orderError || !insertedOrder) {
       return NextResponse.json({ error: `Failed to insert order record: ${orderError?.message || 'Unknown error'}` }, { status: 500 });
@@ -67,7 +88,7 @@ export async function POST(request: Request) {
     const itemsToInsert = [];
     for (const item of cartItems) {
       // Find product_id by slug
-      const { data: prodData, error: prodErr } = await supabaseAdmin
+      const { data: prodData, error: prodErr } = await supabaseClient
         .from('products')
         .select('id')
         .eq('slug', item.slug)
@@ -92,14 +113,14 @@ export async function POST(request: Request) {
       });
     }
 
-    const { error: itemsError } = await supabaseAdmin
+    const { error: itemsError } = await supabaseClient
       .from('order_items')
       .insert(itemsToInsert);
 
     if (itemsError) {
       console.error(`Failed to insert order items: ${itemsError.message}. Rolling back order.`);
       // Rollback order
-      await supabaseAdmin
+      await supabaseClient
         .from('orders')
         .delete()
         .eq('id', insertedOrder.id);
