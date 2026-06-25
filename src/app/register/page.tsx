@@ -245,6 +245,8 @@ export default function RegisterPage() {
       const lowerErr = result.error.toLowerCase();
       if (lowerErr.includes("already registered") || lowerErr.includes("already exists") || lowerErr.includes("taken")) {
         friendlyError = "An account with this email address already exists. Please log in or try a different email.";
+      } else if (lowerErr.includes("rate limit") || lowerErr.includes("too many requests") || lowerErr.includes("429")) {
+        friendlyError = "Signup rate limit exceeded. Please wait a few minutes, or go to your Supabase Dashboard -> Settings -> Auth to increase the hourly signup limit.";
       }
       setServerError(friendlyError);
       setSubmitting(false);

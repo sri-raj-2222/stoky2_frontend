@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -83,9 +83,30 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
-  const { signIn, signInWithProvider } = useAuth();
+  const { signIn, signInWithProvider, isAdmin, user } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (loginSuccess && user) {
+      if (isAdmin) {
+        router.push('/account');
+      } else {
+        router.push('/');
+      }
+    }
+  }, [loginSuccess, user, isAdmin, router]);
+
+  useEffect(() => {
+    if (user && !loginSuccess) {
+      if (isAdmin) {
+        router.push('/account');
+      } else {
+        router.push('/');
+      }
+    }
+  }, [user, isAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,10 +128,10 @@ export default function LoginPage() {
       setError(friendlyError);
       setSubmitting(false);
     } else {
-      // Successful login — redirect to home
-      router.push("/");
+      setLoginSuccess(true);
     }
   };
+
 
   return (
     <main className={styles.loginPage}>

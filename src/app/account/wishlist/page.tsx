@@ -348,12 +348,27 @@ export default function WishlistPage() {
   // Sidebar nav items
   const navItems = [
     { icon: <OverviewIcon />, label: "Overview", href: "/account" },
+    ...(user.email === "garapatisurya07@gmail.com" ? [
+      {
+        icon: (
+          <svg className={layoutStyles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="9" rx="1" />
+            <rect x="14" y="3" width="7" height="5" rx="1" />
+            <rect x="14" y="12" width="7" height="9" rx="1" />
+            <rect x="3" y="16" width="7" height="5" rx="1" />
+          </svg>
+        ),
+        label: "Admin Panel",
+        href: "/admin/products"
+      }
+    ] : []),
     { icon: <OrdersIcon />, label: "My Orders", href: "/account/orders" },
     { icon: <WishlistIcon />, label: "Wishlist", href: "/account/wishlist", active: true },
     { icon: <AddressIcon />, label: "Addresses", href: "/account" },
     { icon: <PaymentIcon />, label: "Payment Methods", href: "/account" },
     { icon: <SettingsIcon />, label: "Settings", href: "/account/settings" },
   ];
+
 
   return (
     <>

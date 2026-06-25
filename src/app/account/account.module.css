@@ -465,3 +465,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+.adminContent {
+  margin: 0 auto !important;
+  max-width: 1200px !important;
+  padding: 60px 24px 100px !important;
+  flex: 1;
+}

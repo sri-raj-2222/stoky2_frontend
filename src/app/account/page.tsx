@@ -138,7 +138,7 @@ function formatDate(iso: string): string {
 /* ─── Page component ───────────────────────────────────────── */
 
 export default function AccountPage() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isAdmin } = useAuth();
   const router = useRouter();
 
   const [data, setData] = useState<DashboardData>({
@@ -232,162 +232,266 @@ export default function AccountPage() {
 
   if (!user) return null;
 
-  const navItems = [
-    { icon: <OverviewIcon />, label: "Overview", href: "/account", active: true },
-    { icon: <OrdersIcon />, label: "My Orders", href: "/account/orders", active: false },
-    { icon: <WishlistIcon />, label: "Wishlist", href: "/account/wishlist", active: false },
-    { icon: <AddressIcon />, label: "Addresses", href: "/account", active: false },
-    { icon: <PaymentIcon />, label: "Payment Methods", href: "/account", active: false },
-    { icon: <SettingsIcon />, label: "Settings", href: "/account/settings", active: false },
-  ];
+  const navItems = isAdmin
+    ? [
+        {
+          icon: (
+            <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="9" rx="1" />
+              <rect x="14" y="3" width="7" height="5" rx="1" />
+              <rect x="14" y="12" width="7" height="9" rx="1" />
+              <rect x="3" y="16" width="7" height="5" rx="1" />
+            </svg>
+          ),
+          label: "Products",
+          href: "/admin/products",
+          active: false
+        },
+        { icon: <SettingsIcon />, label: "Settings", href: "/admin/settings", active: false },
+      ]
+    : [
+        { icon: <OverviewIcon />, label: "Overview", href: "/account", active: true },
+        { icon: <OrdersIcon />, label: "My Orders", href: "/account/orders", active: false },
+        { icon: <WishlistIcon />, label: "Wishlist", href: "/account/wishlist", active: false },
+        { icon: <AddressIcon />, label: "Addresses", href: "/account", active: false },
+        { icon: <PaymentIcon />, label: "Payment Methods", href: "/account", active: false },
+        { icon: <SettingsIcon />, label: "Settings", href: "/account/settings", active: false },
+      ];
+
 
   return (
     <>
       <Navbar />
       <main className={styles.dashboardPage}>
         {/* ── Sidebar ──────────────────────── */}
-        <aside className={styles.sidebar}>
-          <div className={styles.profileSection}>
-            <div className={styles.avatar}>{initials}</div>
-            <div>
-              <div className={styles.profileName}>{fullName}</div>
-              <div className={styles.profileEmail}>{email}</div>
+        {!isAdmin && (
+          <aside className={styles.sidebar}>
+            <div className={styles.profileSection}>
+              <div className={styles.avatar}>{initials}</div>
+              <div>
+                <div className={styles.profileName}>{fullName}</div>
+                <div className={styles.profileEmail}>{email}</div>
+              </div>
             </div>
-          </div>
 
-          <nav className={styles.navLinks}>
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`${styles.navLink} ${item.active ? styles.navLinkActive : ""}`}
+            <nav className={styles.navLinks}>
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`${styles.navLink} ${item.active ? styles.navLinkActive : ""}`}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              ))}
+
+              <button
+                className={`${styles.navLink} ${styles.signOutLink}`}
+                onClick={signOut}
               >
-                {item.icon}
-                {item.label}
-              </Link>
-            ))}
-
-            <button
-              className={`${styles.navLink} ${styles.signOutLink}`}
-              onClick={signOut}
-            >
-              <SignOutIcon />
-              Sign Out
-            </button>
-          </nav>
-        </aside>
+                <SignOutIcon />
+                Sign Out
+              </button>
+            </nav>
+          </aside>
+        )}
 
         {/* ── Content ──────────────────────── */}
-        <div className={styles.content}>
+        <div className={`${styles.content} ${isAdmin ? styles.adminContent : ""}`}>
           {/* Greeting */}
           <h1 className={styles.greeting}>Hello, {fullName.split(" ")[0]}</h1>
           <p className={styles.greetingSub}>
-            Welcome to your account dashboard.
+            {isAdmin 
+              ? "Welcome to your administrator control center. Manage your store catalog and settings below." 
+              : "Welcome to your account dashboard."}
           </p>
 
-          {/* Stats */}
-          <div className={styles.statsRow}>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                {dataLoading ? "—" : data.totalOrders}
-              </div>
-              <div className={styles.statLabel}>Total Orders</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                {dataLoading ? "—" : data.loyaltyPoints}
-              </div>
-              <div className={styles.statLabel}>Loyalty Points</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                {dataLoading ? "—" : data.savedItems}
-              </div>
-              <div className={styles.statLabel}>Saved Items</div>
-            </div>
-          </div>
+          {isAdmin ? (
+            /* Admin Shortcuts */
+            <div style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+              <Link href="/admin/products" style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '12px',
+                padding: '32px',
+                display: 'block',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none',
+                color: 'inherit'
+              }}>
+                <div style={{ fontSize: '28px', marginBottom: '16px' }}>📦</div>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: '0 0 8px 0' }}>Products Management</h3>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.5 }}>Add new items, adjust stock levels, set pricing, and publish variants.</p>
+              </Link>
 
-          {/* Recent Orders */}
-          <h2 className={styles.sectionHeading}>Recent Orders</h2>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Order #</th>
-                  <th>Date</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentOrders.length === 0 && !dataLoading ? (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", padding: "32px 16px" }}>
-                      No orders yet
-                    </td>
-                  </tr>
-                ) : (
-                  data.recentOrders.map((order) => {
-                    const displayStatus =
-                      statusDisplayMap[order.status] ?? "Processing";
-                    const itemsSummary = order.order_items
-                      ?.map((i) => `${i.product_name} × ${i.quantity}`)
-                      .join(", ") || "—";
+              <Link href="/admin/orders" style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '12px',
+                padding: '32px',
+                display: 'block',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none',
+                color: 'inherit'
+              }}>
+                <div style={{ fontSize: '28px', marginBottom: '16px' }}>📋</div>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: '0 0 8px 0' }}>Orders Management</h3>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.5 }}>Track customer fulfillments, verify payment states, export reports, and issue refunds.</p>
+              </Link>
 
-                    return (
-                      <tr key={order.id}>
-                        <td className={styles.orderNumber}>
-                          {order.order_number}
-                        </td>
-                        <td>{formatDate(order.created_at)}</td>
-                        <td>{itemsSummary}</td>
-                        <td>{formatPrice(order.total)}</td>
-                        <td>
-                          <span
-                            className={`${styles.badge} ${
-                              styles[badgeClassMap[displayStatus] ?? "badgeProcessing"]
-                            }`}
-                          >
-                            {displayStatus}
-                          </span>
-                        </td>
-                        <td>
-                          <Link href="/account/orders" className={styles.viewButton}>View</Link>
+              <Link href="/admin/customers" style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '12px',
+                padding: '32px',
+                display: 'block',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none',
+                color: 'inherit'
+              }}>
+                <div style={{ fontSize: '28px', marginBottom: '16px' }}>👥</div>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: '0 0 8px 0' }}>Users</h3>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.5 }}>Manage customer profiles, assign VIP status, toggle account statuses, and inspect login activity logs.</p>
+              </Link>
+
+              <Link href="/admin/discounts" style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '12px',
+                padding: '32px',
+                display: 'block',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none',
+                color: 'inherit'
+              }}>
+                <div style={{ fontSize: '28px', marginBottom: '16px' }}>🎟️</div>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: '0 0 8px 0' }}>Discounts Manager</h3>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.5 }}>Create promo codes, configure percentage or fixed value reductions, limit usage count, and target specific collections.</p>
+              </Link>
+              
+              <Link href="/admin/settings" style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '12px',
+                padding: '32px',
+                display: 'block',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none',
+                color: 'inherit'
+              }}>
+                <div style={{ fontSize: '28px', marginBottom: '16px' }}>⚙️</div>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: '0 0 8px 0' }}>Store Settings</h3>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.5 }}>Configure standard tax rates, support emails, active currency units, and maintenance status.</p>
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Stats */}
+              <div className={styles.statsRow}>
+                <div className={styles.statCard}>
+                  <div className={styles.statValue}>
+                    {dataLoading ? "—" : data.totalOrders}
+                  </div>
+                  <div className={styles.statLabel}>Total Orders</div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statValue}>
+                    {dataLoading ? "—" : data.loyaltyPoints}
+                  </div>
+                  <div className={styles.statLabel}>Loyalty Points</div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statValue}>
+                    {dataLoading ? "—" : data.savedItems}
+                  </div>
+                  <div className={styles.statLabel}>Saved Items</div>
+                </div>
+              </div>
+
+              {/* Recent Orders */}
+              <h2 className={styles.sectionHeading}>Recent Orders</h2>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>Date</th>
+                      <th>Items</th>
+                      <th>Total</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.recentOrders.length === 0 && !dataLoading ? (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", padding: "32px 16px" }}>
+                          No orders yet
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                    ) : (
+                      data.recentOrders.map((order) => {
+                        const displayStatus =
+                          statusDisplayMap[order.status] ?? "Processing";
+                        const itemsSummary = order.order_items
+                          ?.map((i) => `${i.product_name} × ${i.quantity}`)
+                          .join(", ") || "—";
 
-          {/* Saved Addresses */}
-          <h2 className={styles.sectionHeading}>Saved Addresses</h2>
-          <div className={styles.addressGrid}>
-            {data.addresses.map((addr) => (
-              <div key={addr.id} className={styles.addressCard}>
-                <div className={styles.addressLabel}>{addr.label}</div>
-                <div className={styles.addressText}>
-                  {addr.address_line1}
-                  {addr.address_line2 && <><br />{addr.address_line2}</>}
-                  <br />
-                  {addr.city}, {addr.state} {addr.postal_code}
-                  <br />
-                  {addr.country}
-                </div>
-                {addr.is_default && (
-                  <span className={styles.addressDefault}>Default</span>
-                )}
+                        return (
+                          <tr key={order.id}>
+                            <td className={styles.orderNumber}>
+                              {order.order_number}
+                            </td>
+                            <td>{formatDate(order.created_at)}</td>
+                            <td>{itemsSummary}</td>
+                            <td>{formatPrice(order.total)}</td>
+                            <td>
+                              <span
+                                className={`${styles.badge} ${
+                                  styles[badgeClassMap[displayStatus] ?? "badgeProcessing"]
+                                }`}
+                              >
+                                {displayStatus}
+                              </span>
+                            </td>
+                            <td>
+                              <Link href="/account/orders" className={styles.viewButton}>View</Link>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
-            ))}
-            <button className={styles.addCard}>
-              <div className={styles.addIcon}>+</div>
-              <span className={styles.addLabel}>Add new address</span>
-            </button>
-          </div>
+
+              {/* Saved Addresses */}
+              <h2 className={styles.sectionHeading}>Saved Addresses</h2>
+              <div className={styles.addressGrid}>
+                {data.addresses.map((addr) => (
+                  <div key={addr.id} className={styles.addressCard}>
+                    <div className={styles.addressLabel}>{addr.label}</div>
+                    <div className={styles.addressText}>
+                      {addr.address_line1}
+                      {addr.address_line2 && <><br />{addr.address_line2}</>}
+                      <br />
+                      {addr.city}, {addr.state} {addr.postal_code}
+                      <br />
+                      {addr.country}
+                    </div>
+                    {addr.is_default && (
+                      <span className={styles.addressDefault}>Default</span>
+                    )}
+                  </div>
+                ))}
+                <button className={styles.addCard}>
+                  <div className={styles.addIcon}>+</div>
+                  <span className={styles.addLabel}>Add new address</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </>

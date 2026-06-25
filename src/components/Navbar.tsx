@@ -18,8 +18,10 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { cartCount, openCart } = useCart();
-  const { user } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const accountHref = user ? '/account' : '/login';
+
+  const activeCategories = navCategories;
 
   // Listen to scroll to toggle shadow
   useEffect(() => {
@@ -96,11 +98,27 @@ export default function Navbar() {
           >
             STOKY2
           </Link>
+          {isAdmin && (
+            <span style={{
+              fontSize: '9px',
+              fontWeight: 700,
+              letterSpacing: '0.15em',
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              color: '#fff',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              marginLeft: '8px',
+              verticalAlign: 'middle',
+              textTransform: 'uppercase' as const,
+            }}>
+              Admin
+            </span>
+          )}
         </div>
 
         {/* DESKTOP LAYOUT: Center Categories (13px medium font) */}
         <div className="hidden md:flex items-center space-x-8">
-          {navCategories.map((cat) => (
+          {activeCategories.map((cat) => (
             <Link
               key={cat.label}
               href={cat.href}
@@ -114,26 +132,29 @@ export default function Navbar() {
         {/* UTILITY ACTIONS: Right Alignment (44px touch targets) */}
         <div className="flex items-center space-x-1 md:space-x-2">
           {/* Search (Desktop Only) */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="text-white hover:text-white/70 transition-colors w-11 h-11 flex items-center justify-center p-0"
-            aria-label="Open search"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-5 h-5"
+          {/* Search (Desktop Only) */}
+          {!isAdmin && (
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="text-white hover:text-white/70 transition-colors w-11 h-11 flex items-center justify-center p-0"
+              aria-label="Open search"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.603Z"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.603Z"
+                />
+              </svg>
+            </button>
+          )}
 
           {/* Account (Desktop Only) */}
           <Link
@@ -158,31 +179,43 @@ export default function Navbar() {
           </Link>
 
           {/* Cart Icon with Numeric Badge (Mobile & Desktop) */}
-          <button
-            onClick={openCart}
-            className="relative text-white hover:text-white/70 transition-colors w-11 h-11 flex items-center justify-center p-0 cursor-pointer"
-            aria-label={`View cart with ${cartCount} items`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-5 h-5"
+          {!isAdmin && (
+            <button
+              onClick={openCart}
+              className="relative text-white hover:text-white/70 transition-colors w-11 h-11 flex items-center justify-center p-0 cursor-pointer"
+              aria-label={`View cart with ${cartCount} items`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.263-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5h6.75"
-              />
-            </svg>
-            {cartCount > 0 && (
-              <span className="absolute top-2 right-2 w-4 h-4 bg-white text-black text-[9px] font-bold rounded-full flex items-center justify-center tracking-tighter">
-                {cartCount}
-              </span>
-            )}
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.263-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5h6.75"
+                />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute top-2 right-2 w-4 h-4 bg-white text-black text-[9px] font-bold rounded-full flex items-center justify-center tracking-tighter">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Sign Out (Admins Only) */}
+          {isAdmin && (
+            <button
+              onClick={signOut}
+              className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/70 hover:text-white bg-white/10 hover:bg-white/20 border border-white/10 px-3.5 py-1.5 rounded-sm transition-all cursor-pointer ml-2"
+            >
+              Sign Out
+            </button>
+          )}
         </div>
       </nav>
 
@@ -276,7 +309,7 @@ export default function Navbar() {
 
               {/* Navigation Links */}
               <nav className="flex flex-col space-y-5 mt-8">
-                {navCategories.map((cat) => (
+                {activeCategories.map((cat) => (
                   <Link
                     key={cat.label}
                     href={cat.href}
@@ -292,7 +325,7 @@ export default function Navbar() {
             {/* Drawer Footer Utilities */}
             <div className="border-t border-zinc-100 pt-6">
               <Link
-                href={accountHref}
+                href={isAdmin ? '/admin/products' : accountHref}
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center space-x-3 text-zinc-800 hover:text-zinc-500 transition-colors py-3"
               >
@@ -311,7 +344,7 @@ export default function Navbar() {
                   />
                 </svg>
                 <span className="text-sm font-semibold uppercase tracking-wider">
-                  My Account
+                  {isAdmin ? 'Admin Panel' : 'My Account'}
                 </span>
               </Link>
             </div>
