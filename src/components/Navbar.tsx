@@ -22,7 +22,15 @@ export default function Navbar() {
   const { user, isAdmin, signOut } = useAuth();
   const accountHref = user ? '/account' : '/login';
 
-  const activeCategories = navCategories;
+  const adminCategories = [
+    { label: 'Products', href: '/admin/products' },
+    { label: 'Orders', href: '/admin/orders' },
+    { label: 'Customers', href: '/admin/customers' },
+    { label: 'Discounts', href: '/admin/discounts' },
+    { label: 'Settings', href: '/admin/settings' },
+  ];
+
+  const activeCategories = isAdmin ? adminCategories : navCategories;
 
   // Announcement Bar States
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -475,7 +483,7 @@ export default function Navbar() {
             {/* Drawer Footer Utilities */}
             <div className="border-t border-zinc-100 pt-6">
               <Link
-                href={isAdmin ? '/admin/products' : accountHref}
+                href={accountHref}
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center space-x-3 text-zinc-800 hover:text-zinc-500 transition-colors py-3"
               >
@@ -494,7 +502,7 @@ export default function Navbar() {
                   />
                 </svg>
                 <span className="text-sm font-semibold uppercase tracking-wider">
-                  {isAdmin ? 'Admin Panel' : 'My Account'}
+                  {isAdmin ? 'Admin Dashboard' : 'My Account'}
                 </span>
               </Link>
             </div>
