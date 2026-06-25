@@ -364,8 +364,6 @@ export default function WishlistPage() {
     ] : []),
     { icon: <OrdersIcon />, label: "My Orders", href: "/account/orders" },
     { icon: <WishlistIcon />, label: "Wishlist", href: "/account/wishlist", active: true },
-    { icon: <AddressIcon />, label: "Addresses", href: "/account" },
-    { icon: <PaymentIcon />, label: "Payment Methods", href: "/account" },
     { icon: <SettingsIcon />, label: "Settings", href: "/account/settings" },
   ];
 

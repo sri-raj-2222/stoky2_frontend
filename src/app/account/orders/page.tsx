@@ -384,16 +384,58 @@ export default function OrdersPage() {
 
     setDataLoading(true);
 
-    const { data, error } = await supabase
+    const { data: dbOrders, error } = await supabase
       .from("orders")
-      .select(
-        "id, order_number, status, subtotal, shipping, discount, total, tracking_number, shipped_at, delivered_at, created_at, updated_at, order_items(id, product_name, product_slug, variant, quantity, unit_price, total_price, image_url)"
-      )
-      .eq("user_id", user.id)
+      .select("*, order_items(*)")
+      .or(`user_id.eq.${user.id},shipping_address->>email.ilike.${user.email}`)
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setOrders(data as Order[]);
+    if (!error && dbOrders) {
+      const mappedOrders: Order[] = dbOrders.map((o: any) => {
+        const items: OrderItem[] = (o.order_items || []).map((i: any) => {
+          let itemVariant = "Standard";
+          if (i.variant) {
+            if (typeof i.variant === "string") {
+              itemVariant = i.variant;
+            } else if (i.variant.size || i.variant.color) {
+              itemVariant = `${i.variant.size || ""}${i.variant.size && i.variant.color ? " / " : ""}${i.variant.color || ""}`;
+            }
+          }
+          const priceRupees = parseFloat(i.price) || 0;
+          const unitPricePaise = Math.round(priceRupees * 100);
+          const qty = i.quantity || 1;
+          const itemSlug = i.product_slug || i.product_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+          return {
+            id: i.id,
+            product_name: i.product_name,
+            product_slug: itemSlug,
+            variant: itemVariant,
+            quantity: qty,
+            unit_price: unitPricePaise,
+            total_price: unitPricePaise * qty,
+            image_url: i.product_image || "/images/tshirt-black.png"
+          };
+        });
+
+        return {
+          id: o.id,
+          order_number: o.order_number,
+          status: o.status || o.fulfillment_status || "pending",
+          subtotal: Math.round((o.subtotal || 0) * 100),
+          shipping: Math.round((o.shipping_cost || 0) * 100),
+          discount: Math.round((o.discount_amount || 0) * 100),
+          total: Math.round((o.total || 0) * 100),
+          tracking_number: o.tracking_number || null,
+          shipped_at: o.shipped_at || null,
+          delivered_at: o.delivered_at || null,
+          created_at: o.created_at,
+          updated_at: o.updated_at,
+          order_items: items
+        };
+      });
+
+      setOrders(mappedOrders);
     }
 
     setDataLoading(false);
@@ -463,8 +505,6 @@ export default function OrdersPage() {
     ] : []),
     { icon: <OrdersIcon />, label: "My Orders", href: "/account/orders", active: true },
     { icon: <WishlistIcon />, label: "Wishlist", href: "/account/wishlist" },
-    { icon: <AddressIcon />, label: "Addresses", href: "/account" },
-    { icon: <PaymentIcon />, label: "Payment Methods", href: "/account" },
     { icon: <SettingsIcon />, label: "Settings", href: "/account/settings" },
   ];
 

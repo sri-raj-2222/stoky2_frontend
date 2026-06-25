@@ -168,7 +168,7 @@ export default function AccountPage() {
         supabase
           .from("orders")
           .select("id, order_number, status, total, created_at, order_items(product_name, quantity)")
-          .eq("user_id", user.id)
+          .or(`user_id.eq.${user.id},shipping_address->>email.ilike.${user.email}`)
           .order("created_at", { ascending: false })
           .limit(5),
         supabase
@@ -191,7 +191,7 @@ export default function AccountPage() {
     const orderCountRes = await supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id);
+      .or(`user_id.eq.${user.id},shipping_address->>email.ilike.${user.email}`);
 
     setData({
       totalOrders: orderCountRes.count ?? 0,
@@ -253,8 +253,6 @@ export default function AccountPage() {
         { icon: <OverviewIcon />, label: "Overview", href: "/account", active: true },
         { icon: <OrdersIcon />, label: "My Orders", href: "/account/orders", active: false },
         { icon: <WishlistIcon />, label: "Wishlist", href: "/account/wishlist", active: false },
-        { icon: <AddressIcon />, label: "Addresses", href: "/account", active: false },
-        { icon: <PaymentIcon />, label: "Payment Methods", href: "/account", active: false },
         { icon: <SettingsIcon />, label: "Settings", href: "/account/settings", active: false },
       ];
 
@@ -466,30 +464,7 @@ export default function AccountPage() {
                 </table>
               </div>
 
-              {/* Saved Addresses */}
-              <h2 className={styles.sectionHeading}>Saved Addresses</h2>
-              <div className={styles.addressGrid}>
-                {data.addresses.map((addr) => (
-                  <div key={addr.id} className={styles.addressCard}>
-                    <div className={styles.addressLabel}>{addr.label}</div>
-                    <div className={styles.addressText}>
-                      {addr.address_line1}
-                      {addr.address_line2 && <><br />{addr.address_line2}</>}
-                      <br />
-                      {addr.city}, {addr.state} {addr.postal_code}
-                      <br />
-                      {addr.country}
-                    </div>
-                    {addr.is_default && (
-                      <span className={styles.addressDefault}>Default</span>
-                    )}
-                  </div>
-                ))}
-                <button className={styles.addCard}>
-                  <div className={styles.addIcon}>+</div>
-                  <span className={styles.addLabel}>Add new address</span>
-                </button>
-              </div>
+
             </>
           )}
         </div>
