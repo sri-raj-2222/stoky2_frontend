@@ -1,0 +1,433 @@
+/* Account Settings Stylesheet — clean, centered, dark-themed forms */
+
+.settingsPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #ffffff;
+  padding: 112px 24px 80px 24px; /* navbar offset */
+  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+}
+
+.container {
+  max-width: 560px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header & Back Navigation */
+.backLink {
+  font-size: 11.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  tracking: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  transition: color 0.2s ease;
+  width: fit-content;
+}
+
+.backLink:hover {
+  color: #ffffff;
+}
+
+.backIcon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.backLink:hover .backIcon {
+  transform: translateX(-3px);
+}
+
+.pageTitle {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  margin: 0 0 36px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 16px;
+}
+
+/* Section Dividers & General Layout */
+.section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 24px 0;
+  color: #ffffff;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 40px 0;
+}
+
+/* Form Fields */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-cols: 1fr;
+  gap: 0 16px;
+}
+
+@media (min-width: 480px) {
+  .formRow {
+    grid-template-cols: 1fr 1fr;
+  }
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.input, .select {
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  border-radius: 4px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.input:focus, .select:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: #161616;
+}
+
+.input[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Email Verified Badge */
+.verifiedBadge {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2.5px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.checkIconMini {
+  width: 11px;
+  height: 11px;
+}
+
+/* Submit Actions */
+.btnSubmit {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: fit-content;
+  margin-top: 8px;
+}
+
+.btnSubmit:hover {
+  background: #eaeaea;
+  border-color: #eaeaea;
+}
+
+/* Password Strength Indicator */
+.strengthMeter {
+  height: 4px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.strengthBar {
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strengthText {
+  font-size: 10.5px;
+  font-weight: 500;
+  margin-top: 5px;
+  display: block;
+}
+
+/* Custom CSS Toggle Switches */
+.toggleGroup {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.toggleGroup:last-of-type {
+  border-bottom: none;
+}
+
+.toggleLabelArea {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 16px;
+}
+
+.toggleTitle {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.toggleDesc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.45;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.08);
+  transition: background-color 0.25s ease;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: #ffffff;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: #c9a96e; /* brand gold */
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Danger Zone */
+.warningBlock {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  padding: 16px;
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.btnDelete {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: fit-content;
+}
+
+.btnDelete:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+/* Modal Overlay & Card styling */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  max-width: 440px;
+  width: 100%;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 45px rgba(0, 0, 0, 0.6);
+  animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+  from {
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.modalText {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btnCancel {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnCancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btnConfirmDelete {
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid #ef4444;
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnConfirmDelete:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Toast Notifications */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: #ffffff;
+  color: #000000;
+  padding: 14px 24px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  z-index: 3000;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 4px;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -1,0 +1,327 @@
+/* Verify page — glassmorphism dark theme */
+
+.verifyPage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #0a0a0a;
+  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  padding: 24px 16px;
+  overflow: hidden;
+}
+
+/* Ambient glow blobs */
+.verifyPage::before,
+.verifyPage::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.verifyPage::before {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(201, 169, 110, 0.1) 0%, transparent 70%);
+  top: -8%;
+  left: 10%;
+}
+
+.verifyPage::after {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+  bottom: -5%;
+  right: 5%;
+}
+
+/* ── Card ─────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 36px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: cardEnter 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Email icon ───────────────────────────────────── */
+
+.emailIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 20px;
+}
+
+.emailIcon svg {
+  width: 24px;
+  height: 24px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Heading & subtext ────────────────────────────── */
+
+.heading {
+  font-size: 20px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.subtext {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+
+.emailHighlight {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* ── OTP inputs ───────────────────────────────────── */
+
+.otpRow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.otpInput {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  outline: none;
+  caret-color: transparent;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
+}
+
+.otpInput::placeholder {
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.otpInput:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+  transform: scale(1.04);
+}
+
+.otpInputFilled {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.otpInputError {
+  border-color: rgba(248, 113, 113, 0.5);
+  animation: otpShake 0.4s ease;
+}
+
+@keyframes otpShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* ── Timer / Resend ───────────────────────────────── */
+
+.timerRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  min-height: 20px;
+}
+
+.timerText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+
+.resendButton {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s ease;
+}
+
+.resendButton:hover {
+  color: #ffffff;
+}
+
+/* ── Verify CTA ───────────────────────────────────── */
+
+.submitButton {
+  width: 100%;
+  height: 44px;
+  background: #ffffff;
+  color: #0a0a0a;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+  letter-spacing: 0.3px;
+}
+
+.submitButton:hover {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+}
+
+.submitButton:active {
+  transform: scale(0.985);
+}
+
+.submitButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Verifying state ──────────────────────────────── */
+
+.verifying {
+  position: relative;
+  pointer-events: none;
+  color: transparent;
+}
+
+.verifying::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(10, 10, 10, 0.15);
+  border-top-color: #0a0a0a;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  top: 50%;
+  left: 50%;
+  margin-top: -9px;
+  margin-left: -9px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Footer ───────────────────────────────────────── */
+
+.footer {
+  margin-top: 28px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.footerLink {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  text-decoration: none;
+  margin-left: 4px;
+  transition: color 0.2s ease;
+}
+
+.footerLink:hover {
+  color: #ffffff;
+}
+
+/* ── Success state ────────────────────────────────── */
+
+.successIcon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  margin-bottom: 16px;
+  animation: successPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes successPop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.successIcon svg {
+  width: 28px;
+  height: 28px;
+  color: #4ade80;
+}
+
+.successHeading {
+  font-size: 20px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.successSubtext {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin-bottom: 28px;
+}

@@ -1,0 +1,699 @@
+/* Orders page — card list, expandable detail, tracking timeline */
+
+/* ── Page header ─────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.orderCount {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 400;
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transition: color 0.2s;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.backLink:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.backArrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── Order cards list ────────────────────────────── */
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.orderCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.orderCard:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.orderCardExpanded {
+  border-color: rgba(201, 169, 110, 0.2);
+}
+
+/* ── Card summary (always visible) ───────────────── */
+
+.cardSummary {
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cardSummary:hover {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.cardTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.orderMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.orderNumber {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  letter-spacing: 0.3px;
+}
+
+.orderDate {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Status badges ───────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.badgeDelivered {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.15);
+}
+
+.badgePending,
+.badgeProcessing {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.badgeShipped {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.15);
+}
+
+.badgeCancelled {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.15);
+}
+
+/* ── Product thumbnails row ──────────────────────── */
+
+.thumbnailRow {
+  display: flex;
+  align-items: center;
+  gap: -4px;
+  margin-bottom: 14px;
+}
+
+.thumbnail {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  margin-left: -6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.thumbnail:first-child {
+  margin-left: 0;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailMore {
+  background: rgba(201, 169, 110, 0.1);
+  color: #c9a96e;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.itemNames {
+  margin-left: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Card bottom row ─────────────────────────────── */
+
+.cardBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.orderTotal {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.viewOrderLink {
+  font-size: 12px;
+  font-weight: 500;
+  color: #c9a96e;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s, gap 0.2s;
+  padding: 0;
+}
+
+.viewOrderLink:hover {
+  color: #dfc08e;
+  gap: 7px;
+}
+
+.viewArrow {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.viewArrowRotated {
+  transform: rotate(90deg);
+}
+
+/* ── Expanded detail section ─────────────────────── */
+
+.expandedDetail {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 24px 24px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 2000px;
+  }
+}
+
+/* ── Tracking timeline ───────────────────────────── */
+
+.timelineSection {
+  padding: 24px 0 20px;
+}
+
+.timelineLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 20px;
+}
+
+.timeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  position: relative;
+  padding: 0 4px;
+}
+
+.timelineStep {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.stepCircle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.stepCircleCompleted {
+  border-color: #c9a96e;
+  background: #c9a96e;
+}
+
+.stepCircleCompleted svg {
+  color: #0a0a0a;
+}
+
+.stepCircleCurrent {
+  border-color: #c9a96e;
+  background: transparent;
+  box-shadow: 0 0 0 4px rgba(201, 169, 110, 0.15);
+}
+
+.stepCircleCurrent .stepDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c9a96e;
+}
+
+.stepCircleCancelled {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.checkIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.stepName {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stepNameCompleted {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.stepNameCurrent {
+  color: #c9a96e;
+  font-weight: 600;
+}
+
+.stepDate {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.25);
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* Timeline connector line */
+.timelineConnectorWrap {
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 18px);
+  right: calc(-50% + 18px);
+  height: 2px;
+  z-index: 0;
+}
+
+.connectorBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 1px;
+}
+
+.connectorFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: #c9a96e;
+  border-radius: 1px;
+  transition: width 0.4s ease;
+}
+
+/* ── Products section ────────────────────────────── */
+
+.productsSection {
+  padding: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+
+.productList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.productRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+}
+
+.productRow:last-child {
+  border-bottom: none;
+}
+
+.productThumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.productThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.productInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.productName {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.productVariant {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.productQty {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: center;
+}
+
+.productPrice {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  flex-shrink: 0;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* ── Order summary ───────────────────────────────── */
+
+.summarySection {
+  padding: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.summaryTable {
+  width: 100%;
+  max-width: 300px;
+  margin-left: auto;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.summaryRowTotal {
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.discountValue {
+  color: #4ade80;
+}
+
+/* ── Action buttons ──────────────────────────────── */
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  padding: 10px 22px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #0a0a0a;
+  background: #c9a96e;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btnPrimary:hover {
+  background: #dfc08e;
+  transform: translateY(-1px);
+}
+
+.btnOutlined {
+  padding: 10px 22px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btnOutlined:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.btnText {
+  padding: 10px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btnText:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Empty & loading states ──────────────────────── */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.2;
+}
+
+.emptyTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.loadingText {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 13px;
+  text-align: center;
+  padding: 60px 0;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .cardSummary {
+    padding: 16px 18px;
+  }
+
+  .orderNumber {
+    font-size: 13px;
+  }
+
+  .thumbnailRow {
+    margin-bottom: 12px;
+  }
+
+  .thumbnail {
+    width: 30px;
+    height: 30px;
+    font-size: 9px;
+  }
+
+  .timeline {
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+  }
+
+  .timelineStep {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+
+  .stepCircle {
+    margin-bottom: 0;
+  }
+
+  .stepName {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .timelineConnectorWrap {
+    display: none;
+  }
+
+  .productRow {
+    gap: 10px;
+  }
+
+  .productThumb {
+    width: 40px;
+    height: 40px;
+  }
+
+  .productQty {
+    display: none;
+  }
+
+  .summaryTable {
+    max-width: 100%;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btnPrimary,
+  .btnOutlined {
+    text-align: center;
+  }
+}

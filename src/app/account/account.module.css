@@ -1,0 +1,467 @@
+/* Account dashboard — dark theme, clean layout */
+
+.dashboardPage {
+  display: flex;
+  min-height: 100vh;
+  background: #0a0a0a;
+  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  color: #ededed;
+  padding-top: 72px; /* navbar offset */
+}
+
+/* ── Sidebar ──────────────────────────────────────── */
+
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 36px 0 36px 24px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 72px;
+  height: calc(100vh - 72px);
+}
+
+.profileSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px 28px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 24px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.profileName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.profileEmail {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  word-break: break-all;
+}
+
+/* ── Nav links ────────────────────────────────────── */
+
+.navLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  padding-right: 20px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: color 0.2s ease, background 0.2s ease;
+  position: relative;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.navLink:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.navLinkActive {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 500;
+}
+
+.navLinkActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: #c9a96e;
+}
+
+.navIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.navLinkActive .navIcon {
+  opacity: 1;
+}
+
+.signOutLink {
+  margin-top: auto;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.signOutLink:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.06);
+}
+
+/* ── Content area ─────────────────────────────────── */
+
+.content {
+  flex: 1;
+  padding: 36px 40px 60px;
+  min-width: 0;
+  max-width: 960px;
+}
+
+.greeting {
+  font-size: 24px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.greetingSub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 32px;
+}
+
+/* ── Stats row ────────────────────────────────────── */
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  padding: 20px 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.statCard:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Section heading ──────────────────────────────── */
+
+.sectionHeading {
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+/* ── Orders table ─────────────────────────────────── */
+
+.tableWrapper {
+  margin-bottom: 40px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table tbody td {
+  padding: 14px 16px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+}
+
+.orderNumber {
+  font-weight: 500;
+  color: #ffffff;
+}
+
+/* ── Status badges ────────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.badgeDelivered {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.15);
+}
+
+.badgeProcessing {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.badgeCancelled {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.15);
+}
+
+/* ── View button ──────────────────────────────────── */
+
+.viewButton {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.viewButton:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Address cards ────────────────────────────────── */
+
+.addressGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.addressCard {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.addressCard:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.addressLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.addressText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.6;
+}
+
+.addressDefault {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #c9a96e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Add new card ─────────────────────────────────── */
+
+.addCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.addCard:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.addIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 300;
+}
+
+.addLabel {
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+/* ── Mobile responsive ────────────────────────────── */
+
+@media (max-width: 768px) {
+  .dashboardPage {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 24px 20px;
+    flex-direction: column;
+  }
+
+  .profileSection {
+    padding: 0 0 20px 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+
+  .profileName,
+  .profileEmail {
+    text-align: left;
+  }
+
+  .navLinks {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-right: 0;
+  }
+
+  .navLink {
+    padding: 8px 12px;
+    font-size: 12px;
+    width: auto;
+  }
+
+  .navLinkActive::before {
+    display: none;
+  }
+
+  .signOutLink {
+    margin-top: 0;
+  }
+
+  .content {
+    padding: 24px 20px 40px;
+  }
+
+  .statsRow {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .statCard {
+    padding: 14px 16px;
+  }
+
+  .statValue {
+    font-size: 22px;
+  }
+
+  .addressGrid {
+    grid-template-columns: 1fr;
+  }
+}
