@@ -185,6 +185,44 @@ export default function AdminOrdersPage() {
   };
 
   // Bootstrap data loading
+  const buildOrderTimeline = (status: OrderStatus, paymentStatus: PaymentStatus, createdAt: string, trackingNumber?: string) => {
+    const orderDate = new Date(createdAt);
+    const timeline: TimelineStep[] = [
+      { status: 'Order Placed', date: orderDate.toLocaleString(), description: 'Order was successfully submitted by the customer.', completed: true },
+      { status: 'Payment Verification', date: orderDate.toLocaleString(), description: paymentStatus === 'Paid' ? 'Payment was successfully captured.' : 'Payment is pending verification.', completed: paymentStatus === 'Paid' }
+    ];
+    
+    if (status === 'Processing' || status === 'Shipped' || status === 'Delivered') {
+      const procDate = new Date(orderDate);
+      procDate.setHours(procDate.getHours() + 4);
+      timeline.push({ status: 'Processing', date: procDate.toLocaleString(), description: 'Order is packed and ready for dispatch.', completed: true });
+    }
+    
+    if (status === 'Shipped' || status === 'Delivered') {
+      const shipDate = new Date(orderDate);
+      shipDate.setDate(shipDate.getDate() + 1);
+      timeline.push({ status: 'Shipped', date: shipDate.toLocaleString(), description: `Dispatched. Tracking ID: ${trackingNumber || 'Pending'}`, completed: true });
+    }
+    
+    if (status === 'Delivered') {
+      const delDate = new Date(orderDate);
+      delDate.setDate(delDate.getDate() + 3);
+      timeline.push({ status: 'Delivered', date: delDate.toLocaleString(), description: 'Package was signed and delivered.', completed: true });
+    }
+    
+    if (status === 'Cancelled') {
+      const cancelDate = new Date(orderDate);
+      cancelDate.setHours(cancelDate.getHours() + 2);
+      timeline.push({ status: 'Cancelled', date: cancelDate.toLocaleString(), description: 'Order was cancelled.', completed: true });
+      if (paymentStatus === 'Refunded') {
+        timeline.push({ status: 'Refund Issued', date: cancelDate.toLocaleString(), description: 'Refund of full order amount was processed.', completed: true });
+      }
+    }
+    
+    return timeline;
+  };
+
+  // Bootstrap data loading
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -192,46 +230,82 @@ export default function AdminOrdersPage() {
         // Query orders table in Supabase
         const { data: dbOrders, error } = await supabase
           .from('orders')
-          .select('*, order_items(*)');
+          .select('*, order_items(*)')
+          .order('created_at', { ascending: false });
           
         if (error) {
           console.warn('Supabase fetch failed, falling back to mock orders:', error.message);
         }
         
-        // If DB has data, we can use it. Since it has 0 rows, we use mock orders!
+        // If DB has data, we can use it.
         if (dbOrders && dbOrders.length > 0) {
           // Parse columns from DB schema
           const parsed: Order[] = dbOrders.map((o: any) => {
-            const itemsList: OrderItem[] = (o.order_items || []).map((i: any) => ({
-              id: i.id,
-              product_name: i.product_name,
-              product_slug: i.product_slug,
-              variant: i.variant || 'Standard',
-              quantity: i.quantity || 1,
-              unit_price: i.unit_price || o.total,
-              image_url: i.image_url || '/images/tshirt-black.png'
-            }));
+            const itemsList: OrderItem[] = (o.order_items || []).map((i: any) => {
+              // Convert variant shape
+              let itemVariant = 'Standard';
+              if (i.variant) {
+                if (typeof i.variant === 'string') {
+                  itemVariant = i.variant;
+                } else if (i.variant.size || i.variant.color) {
+                  itemVariant = `${i.variant.size || ''} / ${i.variant.color || ''}`;
+                }
+              }
+              // Slugify fallback
+              const itemSlug = i.product_slug || i.product_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              
+              return {
+                id: i.id,
+                product_name: i.product_name,
+                product_slug: itemSlug,
+                variant: itemVariant,
+                quantity: i.quantity || 1,
+                unit_price: Math.round((i.price || 0) * 100), // database stores in rupees, app expects paise
+                image_url: i.product_image || '/images/tshirt-black.png'
+              };
+            });
+
+            // Extract customer info from shipping_address JSONB
+            const addr = o.shipping_address || {};
+            const firstName = addr.first_name || '';
+            const lastName = addr.last_name || '';
+            const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Guest Customer';
+            const emailAddr = addr.email || 'guest@example.com';
+            const phoneNum = addr.phone || '+91 99000 11000';
+            
+            // Format full address
+            const line1 = addr.address_line1 || '';
+            const line2 = addr.address_line2 ? `, ${addr.address_line2}` : '';
+            const cityStr = addr.city || '';
+            const stateStr = addr.state || '';
+            const zipStr = addr.postal_code || '';
+            const fullAddr = line1 ? `${line1}${line2}, ${cityStr}, ${stateStr} - ${zipStr}` : 'Address not specified';
+            
+            const rawStatus = (o.status || o.fulfillment_status || 'Pending').toLowerCase();
+            const orderStatus = (rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1)) as OrderStatus;
+
+            const rawPaymentStatus = (o.payment_status || 'Pending').toLowerCase();
+            const paymentStatus = (rawPaymentStatus.charAt(0).toUpperCase() + rawPaymentStatus.slice(1)) as PaymentStatus;
             
             return {
               id: o.id,
               order_number: o.order_number || `STK-ORD-${o.id.slice(0, 4).toUpperCase()}`,
-              customer_name: 'Customer Name',
-              customer_email: 'customer@gmail.com',
-              customer_phone: '+91 99000 11000',
-              customer_address: 'Shipping address not provided',
-              map_pin_url: '#',
+              customer_name: fullName,
+              customer_email: emailAddr,
+              customer_phone: phoneNum,
+              customer_address: fullAddr,
+              map_pin_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`,
               created_at: o.created_at,
-              status: (o.status ? o.status.charAt(0).toUpperCase() + o.status.slice(1) : 'Pending') as OrderStatus,
-              payment_status: 'Paid',
-              subtotal: o.subtotal || o.total,
-              shipping: o.shipping || 0,
-              discount: o.discount || 0,
-              total: o.total,
+              status: orderStatus,
+              payment_status: paymentStatus,
+              subtotal: Math.round((o.subtotal || o.total) * 100), // DB numeric to paise
+              shipping: Math.round((o.shipping_cost || 0) * 100),
+              discount: Math.round((o.discount_amount || 0) * 100),
+              total: Math.round(o.total * 100),
               items: itemsList,
-              timeline: [
-                { status: 'Order Placed', date: new Date(o.created_at).toLocaleString(), description: 'Submitted.', completed: true }
-              ],
-              notes: o.notes || ''
+              timeline: buildOrderTimeline(orderStatus, paymentStatus, o.created_at, o.tracking_number),
+              notes: o.notes || '',
+              tracking_number: o.tracking_number || undefined
             };
           });
           setOrders(parsed);
@@ -359,117 +433,185 @@ export default function AdminOrdersPage() {
   };
 
   // active detail actions
-  const handleMarkAsShipped = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleMarkAsShipped = async () => {
     if (!selectedOrder) return;
     if (!trackingNumberInput.trim()) {
       showToast('Please enter a tracking number', 'error');
       return;
     }
     
-    const updated = orders.map((o) => {
-      if (o.id === selectedOrder.id) {
-        const newTimeline = [...o.timeline];
-        newTimeline.push({
-          status: 'Shipped',
-          date: new Date().toLocaleString(),
-          description: `Dispatched via BlueDart. Tracking ID: ${trackingNumberInput}`,
-          completed: true
-        });
-        
-        const updatedOrder: Order = {
-          ...o,
-          status: 'Shipped',
-          tracking_number: trackingNumberInput,
-          timeline: newTimeline
-        };
-        
-        setSelectedOrder(updatedOrder);
-        return updatedOrder;
+    try {
+      const isDbOrder = selectedOrder.id.toString().includes('-');
+      if (isDbOrder) {
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            fulfillment_status: 'shipped',
+            status: 'shipped',
+            tracking_number: trackingNumberInput
+          })
+          .eq('id', selectedOrder.id);
+        if (error) throw error;
       }
-      return o;
-    });
-    
-    saveOrdersState(updated);
-    showToast(`Order marked as Shipped. Tracking ID: ${trackingNumberInput}`);
+
+      const updated = orders.map((o) => {
+        if (o.id === selectedOrder.id) {
+          const newTimeline = [...o.timeline];
+          newTimeline.push({
+            status: 'Shipped',
+            date: new Date().toLocaleString(),
+            description: `Dispatched. Tracking ID: ${trackingNumberInput}`,
+            completed: true
+          });
+          
+          const updatedOrder: Order = {
+            ...o,
+            status: 'Shipped',
+            tracking_number: trackingNumberInput,
+            timeline: newTimeline
+          };
+          
+          setSelectedOrder(updatedOrder);
+          return updatedOrder;
+        }
+        return o;
+      });
+      
+      saveOrdersState(updated);
+      showToast(`Order marked as Shipped. Tracking ID: ${trackingNumberInput}`);
+    } catch (err: any) {
+      console.error(err);
+      showToast(`Failed to update order: ${err.message || err}`, 'error');
+    }
   };
 
-  const handleIssueRefund = () => {
+  const handleIssueRefund = async () => {
     if (!selectedOrder) return;
     
-    const updated = orders.map((o) => {
-      if (o.id === selectedOrder.id) {
-        const newTimeline = [...o.timeline];
-        newTimeline.push({
-          status: 'Refund Processed',
-          date: new Date().toLocaleString(),
-          description: 'A refund of full order amount was processed back to original source.',
-          completed: true
-        });
-        
-        const updatedOrder: Order = {
-          ...o,
-          payment_status: 'Refunded',
-          status: 'Cancelled', // Refunding cancels order if not done
-          timeline: newTimeline
-        };
-        
-        setSelectedOrder(updatedOrder);
-        return updatedOrder;
+    try {
+      const isDbOrder = selectedOrder.id.toString().includes('-');
+      if (isDbOrder) {
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            payment_status: 'refunded',
+            fulfillment_status: 'cancelled',
+            status: 'cancelled'
+          })
+          .eq('id', selectedOrder.id);
+        if (error) throw error;
       }
-      return o;
-    });
-    
-    saveOrdersState(updated);
-    showToast('Payment refund initiated successfully.');
+
+      const updated = orders.map((o) => {
+        if (o.id === selectedOrder.id) {
+          const newTimeline = [...o.timeline];
+          newTimeline.push({
+            status: 'Refund Processed',
+            date: new Date().toLocaleString(),
+            description: 'A refund of full order amount was processed back to original source.',
+            completed: true
+          });
+          
+          const updatedOrder: Order = {
+            ...o,
+            payment_status: 'Refunded',
+            status: 'Cancelled',
+            timeline: newTimeline
+          };
+          
+          setSelectedOrder(updatedOrder);
+          return updatedOrder;
+        }
+        return o;
+      });
+      
+      saveOrdersState(updated);
+      showToast('Payment refund initiated successfully.');
+    } catch (err: any) {
+      console.error(err);
+      showToast(`Failed to refund order: ${err.message || err}`, 'error');
+    }
   };
 
-  const handleCancelOrder = () => {
+  const handleCancelOrder = async () => {
     if (!selectedOrder) return;
     
-    const updated = orders.map((o) => {
-      if (o.id === selectedOrder.id) {
-        const newTimeline = [...o.timeline];
-        newTimeline.push({
-          status: 'Cancelled',
-          date: new Date().toLocaleString(),
-          description: 'Order was cancelled by the administrator.',
-          completed: true
-        });
-        
-        const updatedOrder: Order = {
-          ...o,
-          status: 'Cancelled',
-          timeline: newTimeline
-        };
-        
-        setSelectedOrder(updatedOrder);
-        return updatedOrder;
+    try {
+      const isDbOrder = selectedOrder.id.toString().includes('-');
+      if (isDbOrder) {
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            fulfillment_status: 'cancelled',
+            status: 'cancelled'
+          })
+          .eq('id', selectedOrder.id);
+        if (error) throw error;
       }
-      return o;
-    });
-    
-    saveOrdersState(updated);
-    showToast('Order cancelled successfully.', 'error');
+
+      const updated = orders.map((o) => {
+        if (o.id === selectedOrder.id) {
+          const newTimeline = [...o.timeline];
+          newTimeline.push({
+            status: 'Cancelled',
+            date: new Date().toLocaleString(),
+            description: 'Order was cancelled by the administrator.',
+            completed: true
+          });
+          
+          const updatedOrder: Order = {
+            ...o,
+            status: 'Cancelled',
+            timeline: newTimeline
+          };
+          
+          setSelectedOrder(updatedOrder);
+          return updatedOrder;
+        }
+        return o;
+      });
+      
+      saveOrdersState(updated);
+      showToast('Order cancelled successfully.', 'error');
+    } catch (err: any) {
+      console.error(err);
+      showToast(`Failed to cancel order: ${err.message || err}`, 'error');
+    }
   };
 
-  const handleSaveNotes = () => {
+  const handleSaveNotes = async () => {
     if (!selectedOrder) return;
     
-    const updated = orders.map((o) => {
-      if (o.id === selectedOrder.id) {
-        const updatedOrder = {
-          ...o,
-          notes: adminNotesInput
-        };
-        setSelectedOrder(updatedOrder);
-        return updatedOrder;
+    try {
+      const isDbOrder = selectedOrder.id.toString().includes('-');
+      if (isDbOrder) {
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            notes: adminNotesInput
+          })
+          .eq('id', selectedOrder.id);
+        if (error) throw error;
       }
-      return o;
-    });
-    
-    saveOrdersState(updated);
-    showToast('Admin notes saved successfully!');
+
+      const updated = orders.map((o) => {
+        if (o.id === selectedOrder.id) {
+          const updatedOrder = {
+            ...o,
+            notes: adminNotesInput
+          };
+          setSelectedOrder(updatedOrder);
+          return updatedOrder;
+        }
+        return o;
+      });
+      
+      saveOrdersState(updated);
+      showToast('Admin notes saved successfully!');
+    } catch (err: any) {
+      console.error(err);
+      showToast(`Failed to save notes: ${err.message || err}`, 'error');
+    }
   };
 
   const formatPrice = (paise: number) => {

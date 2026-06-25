@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 export default function CheckoutPage() {
   const { cartItems, cartSubtotal, cartCount, isHydrated } = useCart();
+  const { user } = useAuth();
   const [isGuest, setIsGuest] = useState(true);
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -37,7 +40,7 @@ export default function CheckoutPage() {
   const [orderComplete, setOrderComplete] = useState(false);
 
   // Set up mock order completion timer
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       alert('Please enter your email address.');
@@ -57,12 +60,59 @@ export default function CheckoutPage() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      // Generate a unique order number
+      const orderNumber = `STK-ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // Submit order via backend API to bypass RLS policies and handle email linking safely
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderData: {
+            order_number: orderNumber,
+            user_id: user?.id || null, // Will be linked on the server if email matches
+            subtotal: cartSubtotal,
+            shipping_cost: 0,
+            tax: gstAmount,
+            discount_amount: discountAmount,
+            total: grandTotal,
+            payment_method: paymentMethod,
+            payment_status: 'paid',
+            fulfillment_status: 'pending',
+            shipping_address: {
+              first_name: firstName,
+              last_name: lastName,
+              address_line1: address,
+              address_line2: apartment || null,
+              city: city,
+              state: stateName,
+              postal_code: zipCode,
+              phone: phone,
+              email: email
+            },
+            coupon_id: null,
+            status: 'pending'
+          },
+          cartItems: cartItems
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Failed to submit order');
+      }
+
       setIsSubmitting(false);
       setOrderComplete(true);
-      // Clear storage
       localStorage.removeItem('stoky_cart');
-    }, 2000);
+    } catch (err: any) {
+      console.error('Order creation error:', err);
+      alert(err.message || 'An unexpected error occurred while placing your order.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleApplyDiscount = () => {
