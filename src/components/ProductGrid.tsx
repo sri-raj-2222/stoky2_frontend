@@ -30,6 +30,15 @@ const CATEGORIES = [
   'Long Sleeve'
 ];
 
+interface ProductItem {
+  name: string;
+  price: string;
+  color: string;
+  image: string;
+  slug: string;
+  category: string;
+}
+
 // Helper to format numeric prices (e.g., 1499 -> ₹1,499)
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('en-IN', {
@@ -41,10 +50,8 @@ const formatPrice = (price: number) => {
 
 export default function ProductGrid() {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isUsingFallback, setIsUsingFallback] = useState(false);
-  const [fallbackReason, setFallbackReason] = useState('');
 
   // Fetch products from database on mount
   useEffect(() => {
@@ -57,16 +64,36 @@ export default function ProductGrid() {
           .eq('status', 'Active') // only load active products
           .order('id', { ascending: true });
 
+        // Fallback query if color/image columns are missing in database schema
+        if (error && (error.message.includes('column') || error.message.includes('does not exist'))) {
+          console.warn('Re-fetching without color/image columns...');
+          const { data: fallbackData } = await supabase
+            .from('products')
+            .select('name, price, slug, category, images')
+            .eq('status', 'Active')
+            .order('id', { ascending: true });
+
+          if (fallbackData) {
+            const mapped: ProductItem[] = fallbackData.map((p) => ({
+              name: p.name,
+              price: typeof p.price === 'number' ? formatPrice(p.price) : String(p.price),
+              color: '#000000',
+              image: p.images && p.images.length > 0 ? p.images[0] : '/images/tshirt-black.png',
+              slug: p.slug,
+              category: p.category || 'Classic Fit'
+            }));
+            setProducts(mapped);
+            setLoading(false);
+            return;
+          }
+        }
+
         if (error) throw error;
 
         if (!data || data.length === 0) {
-          // If query succeeds but tables are empty, load seed catalog
           setProducts(mockProducts);
-          setIsUsingFallback(true);
-          setFallbackReason('The database table "products" contains no active records.');
         } else {
-          // Map database schema values to ProductCard properties
-          const mapped = data.map((p: any) => ({
+          const mapped: ProductItem[] = data.map((p) => ({
             name: p.name,
             price: typeof p.price === 'number' ? formatPrice(p.price) : String(p.price),
             color: p.color || '#000000',
@@ -75,13 +102,11 @@ export default function ProductGrid() {
             category: p.category || 'Classic Fit'
           }));
           setProducts(mapped);
-          setIsUsingFallback(false);
         }
-      } catch (err: any) {
-        console.warn('Supabase products fetch failed, using fallback dataset:', err.message || err);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn('Supabase products fetch failed, using fallback dataset:', errMsg);
         setProducts(mockProducts);
-        setIsUsingFallback(true);
-        setFallbackReason(`Database check failed: ${err.message || 'Check database connection.'}`);
       } finally {
         setLoading(false);
       }
@@ -114,18 +139,6 @@ export default function ProductGrid() {
         <p className="mt-4 text-[15px] md:text-base font-normal leading-[1.65] text-white/40 max-w-xl">
           Premium heavyweight cotton. Designed and cut for the perfect drape.
         </p>
-
-        {/* Development Fallback Warning */}
-        {isUsingFallback && (
-          <div className="mt-8 p-4 border border-brand-amber/20 bg-brand-amber/5 text-xs text-brand-amber max-w-xl">
-            <span className="font-bold uppercase tracking-wider block mb-1">
-              Note: Local Catalog Fallback Active
-            </span>
-            <p className="text-white/60">
-              {fallbackReason} Mock product categories are active for testing.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Grid Split Layout */}
@@ -193,7 +206,7 @@ export default function ProductGrid() {
           ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[30vh] border border-white/5 bg-white/[0.01] rounded-sm p-8">
               <span className="text-sm text-white/40 font-medium mb-1">No t-shirts found</span>
-              <span className="text-xs text-white/20 text-center">No products have been added to "{selectedCategory}" yet.</span>
+              <span className="text-xs text-white/20 text-center">No products have been added to &quot;{selectedCategory}&quot; yet.</span>
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">

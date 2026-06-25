@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import CartDrawer from './CartDrawer';
+import { supabase } from '@/lib/supabase';
 
 const navCategories = [
   { label: 'Men', href: '#collection' },
@@ -27,7 +28,14 @@ export default function Navbar() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [fadeState, setFadeState] = useState<'in' | 'out'>('in');
-  const [isDismissed, setIsDismissed] = useState(true);
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  // Dynamic Announcements State
+  const [announcements, setAnnouncements] = useState<Array<{ text: string; link_text?: string; link_url?: string }>>([
+    { text: "Up to 50% off Sale ends Sunday. ", link_text: "Shop Sale", link_url: "#collection" },
+    { text: "Free shipping on orders over 999 rupees. ", link_text: "Learn more", link_url: "#" },
+    { text: "Pay in 3 easy EMIs. No cost. ", link_text: "Know more", link_url: "#" }
+  ]);
 
   // Swipe States
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -35,35 +43,33 @@ export default function Navbar() {
 
   const minSwipeDistance = 50;
 
-  const announcements = [
-    {
-      text: "Up to 50% off Sale ends Sunday. ",
-      link: <a href="#collection" className="underline font-semibold hover:text-white/80 transition-colors">Shop Sale</a>
-    },
-    {
-      text: "Free shipping on orders over 999 rupees. ",
-      link: <a href="#" className="underline font-semibold hover:text-white/80 transition-colors">Learn more</a>
-    },
-    {
-      text: "Pay in 3 easy EMIs. No cost. ",
-      link: <a href="#" className="underline font-semibold hover:text-white/80 transition-colors">Know more</a>
-    }
-  ];
-
+  // Fetch active announcements on mount
   useEffect(() => {
-    const dismissed = localStorage.getItem('stoky_announcement_dismissed');
-    if (dismissed !== 'true') {
-      setIsDismissed(false);
+    async function loadAnnouncements() {
+      try {
+        const { data, error } = await supabase
+          .from('announcements')
+          .select('text, link_text, link_url')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setAnnouncements(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load announcements from Supabase, using defaults:', err);
+      }
     }
+    loadAnnouncements();
   }, []);
 
   const dismissAnnouncement = () => {
-    localStorage.setItem('stoky_announcement_dismissed', 'true');
     setIsDismissed(true);
   };
 
   const rotateMessage = (nextIdx: number) => {
-    if (isAnimating) return;
+    if (isAnimating || announcements.length <= 1) return;
     setIsAnimating(true);
     setFadeState('out');
     setTimeout(() => {
@@ -76,12 +82,12 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    if (isDismissed) return;
+    if (isDismissed || announcements.length <= 1) return;
     const interval = setInterval(() => {
       rotateMessage((currentIndex + 1) % announcements.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [currentIndex, isDismissed, isAnimating]);
+  }, [currentIndex, isDismissed, isAnimating, announcements.length]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -144,7 +150,7 @@ export default function Navbar() {
       {/* Structural Header Wrapper (sticky alignment) */}
       <header className="fixed top-0 left-0 w-full z-50 flex flex-col">
         {/* Announcement Bar */}
-        {!isDismissed && (
+        {!isDismissed && announcements.length > 0 && (
           <div 
             className="w-full h-10 bg-[#1A1A1A] flex items-center justify-between px-4 md:px-8 text-white select-none border-b border-white/5"
             onTouchStart={onTouchStart}
@@ -164,8 +170,15 @@ export default function Navbar() {
 
             {/* Fading Announcement Message */}
             <div className={`flex-1 text-center text-[12px] font-medium tracking-[0.06em] transition-opacity duration-300 ${fadeState === 'in' ? 'opacity-100' : 'opacity-0'}`}>
-              <span>{announcements[currentIndex].text}</span>
-              {announcements[currentIndex].link}
+              <span>{announcements[currentIndex]?.text}</span>
+              {announcements[currentIndex]?.link_text && announcements[currentIndex]?.link_url && (
+                <a 
+                  href={announcements[currentIndex].link_url} 
+                  className="underline font-semibold hover:text-white/80 transition-colors ml-1.5"
+                >
+                  {announcements[currentIndex].link_text}
+                </a>
+              )}
             </div>
 
             {/* Right Controls */}

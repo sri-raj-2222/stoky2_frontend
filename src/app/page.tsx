@@ -6,6 +6,7 @@ import Bestsellers from "@/components/Bestsellers";
 import Editorial from "@/components/Editorial";
 import TrustStrip from "@/components/TrustStrip";
 import Footer from "@/components/Footer";
+import PromoPopup from "@/components/PromoPopup";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
         <TrustStrip />
       </main>
       <Footer />
+      <PromoPopup />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FitQuiz from '@/components/FitQuiz';
 import { useCart } from '@/context/CartContext';
+import { useRouter } from 'next/navigation';
 
 // Define products catalog matching home page items
 interface ProductDetails {
@@ -145,7 +146,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const slug = resolvedParams.slug;
   const product = PRODUCTS_DATA[slug] || PRODUCTS_DATA['essential-black'];
 
-  const { addToCart } = useCart();
+  const { addToCart, closeCart } = useCart();
+  const router = useRouter();
 
   // Client States
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -187,6 +189,20 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  const handleBuyNow = () => {
+    addToCart({
+      id: `${product.slug}-${selectedSize}`,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      color: product.colorName,
+      size: selectedSize,
+      image: product.images[0],
+    });
+    closeCart();
+    router.push('/checkout');
   };
 
   return (
@@ -337,7 +353,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
               {/* Buy Now - Outlined Button */}
               <button
-                onClick={() => alert(`Redirecting to instant checkout for ${product.name} (Size: ${selectedSize})`)}
+                onClick={handleBuyNow}
                 className="w-full bg-transparent hover:bg-white hover:text-black border border-white text-white py-4 text-sm font-medium uppercase tracking-[0.08em] transition-all duration-300 cursor-pointer h-12 flex items-center justify-center"
               >
                 Buy Now

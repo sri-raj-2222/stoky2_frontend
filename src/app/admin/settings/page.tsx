@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import styles from './settings.module.css';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminSettingsPage() {
   const { user, loading: authLoading, isAdmin } = useAuth();
@@ -30,11 +31,147 @@ export default function AdminSettingsPage() {
   
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('announcements');
+
+  // Announcements Tab State
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [originalAnnouncements, setOriginalAnnouncements] = useState<any[]>([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Load announcements from database
+  const loadAnnouncements = async () => {
+    setLoadingAnnouncements(true);
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setAnnouncements(data || []);
+      setOriginalAnnouncements(data || []);
+    } catch (err: any) {
+      console.error('Failed to load announcements:', err);
+      showToast('Failed to load announcements from database.', 'error');
+    } finally {
+      setLoadingAnnouncements(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'announcements') {
+      loadAnnouncements();
+    }
+  }, [activeTab]);
+
+  const generateUUID = () => {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  };
+
+  const handleAddAnnouncement = () => {
+    const newAnn = {
+      id: generateUUID(),
+      text: '',
+      link_text: '',
+      link_url: '',
+      is_active: true,
+      sort_order: announcements.length + 1
+    };
+    setAnnouncements([...announcements, newAnn]);
+  };
+
+  const handleDeleteAnnouncement = (id: string) => {
+    setAnnouncements(announcements.filter(a => a.id !== id));
+  };
+
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const updated = [...announcements];
+    const temp = updated[index];
+    updated[index] = updated[index - 1];
+    updated[index - 1] = temp;
+    setAnnouncements(updated);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === announcements.length - 1) return;
+    const updated = [...announcements];
+    const temp = updated[index];
+    updated[index] = updated[index + 1];
+    updated[index + 1] = temp;
+    setAnnouncements(updated);
+  };
+
+  const handleFieldChange = (id: string, field: string, value: any) => {
+    setAnnouncements(announcements.map(a => a.id === id ? { ...a, [field]: value } : a));
+  };
+
+  const handleSaveAnnouncements = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      // 1. Determine deleted IDs
+      const currentIds = announcements.map(a => a.id);
+      const deletedIds = originalAnnouncements
+        .filter(oa => !currentIds.includes(oa.id))
+        .map(oa => oa.id);
+
+      // 2. Perform deletions
+      if (deletedIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('announcements')
+          .delete()
+          .in('id', deletedIds);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // 3. Perform upserts
+      const upsertPayload = announcements.map((a, index) => ({
+        id: a.id,
+        text: a.text,
+        link_text: a.link_text || '',
+        link_url: a.link_url || '#',
+        is_active: a.is_active,
+        sort_order: index + 1
+      }));
+
+      if (upsertPayload.length > 0) {
+        const { error: upsertError } = await supabase
+          .from('announcements')
+          .upsert(upsertPayload);
+
+        if (upsertError) throw upsertError;
+      }
+
+      showToast('Announcements updated successfully!');
+      await loadAnnouncements();
+    } catch (err: any) {
+      console.error('Failed to save announcements. Full details:', {
+        message: err?.message,
+        details: err?.details,
+        code: err?.code,
+        hint: err?.hint,
+        error: err
+      });
+      const errorMsg = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+      showToast(`Failed to save: ${errorMsg}`, 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -104,6 +241,15 @@ export default function AdminSettingsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
               </svg>
               Admin Profile
+            </button>
+            <button 
+              className={`${styles.navItem} ${activeTab === 'announcements' ? styles.activeNavItem : ''}`}
+              onClick={() => setActiveTab('announcements')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '18px', height: '18px' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+              </svg>
+              Announcements
             </button>
           </aside>
 
@@ -276,6 +422,160 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {activeTab === 'announcements' && (
+              <form onSubmit={handleSaveAnnouncements}>
+                <div className={styles.section}>
+                  <div className={styles.sectionTitle}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: '18px', height: '18px', color: '#8b5cf6' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+                    </svg>
+                    Announcement Bar Settings
+                  </div>
+
+                  <p style={{ fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '24px', lineHeight: '1.5' }}>
+                    Control the rotating messages displayed in the announcement bar at the top of the storefront. Active announcements are rotated automatically. If no active announcements exist, the bar is hidden.
+                  </p>
+
+                  {loadingAnnouncements ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0', color: 'rgba(255, 255, 255, 0.3)' }}>
+                      <span>Loading announcements...</span>
+                    </div>
+                  ) : announcements.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: 'rgba(255, 255, 255, 0.3)' }}>
+                      <p style={{ margin: '0 0 16px 0', fontSize: '13.5px' }}>No announcements defined yet.</p>
+                      <button type="button" onClick={handleAddAnnouncement} className={styles.addBtn} style={{ margin: '0 auto' }}>
+                        Create First Announcement
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      {announcements.map((a, index) => (
+                        <div key={a.id} className={styles.announcementCard}>
+                          <div className={styles.announcementCardHeader}>
+                            <span className={styles.announcementTitle}>
+                              Announcement #{index + 1}
+                            </span>
+                            <div className={styles.announcementControls}>
+                              {/* Move Up */}
+                              <button
+                                type="button"
+                                onClick={() => handleMoveUp(index)}
+                                disabled={index === 0}
+                                className={styles.iconButton}
+                                title="Move Up"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="18 15 12 9 6 15"></polyline>
+                                </svg>
+                              </button>
+                              
+                              {/* Move Down */}
+                              <button
+                                type="button"
+                                onClick={() => handleMoveDown(index)}
+                                disabled={index === announcements.length - 1}
+                                className={styles.iconButton}
+                                title="Move Down"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAnnouncement(a.id)}
+                                className={`${styles.iconButton} ${styles.deleteBtn}`}
+                                title="Delete"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Message input */}
+                          <div className={styles.formGroup} style={{ marginBottom: '16px' }}>
+                            <label className={styles.label}>Message Text *</label>
+                            <input
+                              type="text"
+                              required
+                              value={a.text}
+                              placeholder="e.g. Up to 50% off Sale ends Sunday."
+                              onChange={(e) => handleFieldChange(a.id, 'text', e.target.value)}
+                              className={styles.input}
+                            />
+                          </div>
+
+                          {/* Link Row */}
+                          <div className={styles.formRow} style={{ gap: '16px' }}>
+                            <div className={styles.formGroup} style={{ marginBottom: '0' }}>
+                              <label className={styles.label}>Link Label (Optional)</label>
+                              <input
+                                type="text"
+                                value={a.link_text || ''}
+                                placeholder="e.g. Shop Sale"
+                                onChange={(e) => handleFieldChange(a.id, 'link_text', e.target.value)}
+                                className={styles.input}
+                              />
+                            </div>
+                            <div className={styles.formGroup} style={{ marginBottom: '0' }}>
+                              <label className={styles.label}>Link Destination (Optional)</label>
+                              <input
+                                type="text"
+                                value={a.link_url || ''}
+                                placeholder="e.g. #collection or /sales"
+                                onChange={(e) => handleFieldChange(a.id, 'link_url', e.target.value)}
+                                className={styles.input}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Toggle Active Switch */}
+                          <div style={{ marginTop: '4px' }}>
+                            <label className={styles.activeToggle}>
+                              <input
+                                type="checkbox"
+                                checked={a.is_active}
+                                onChange={(e) => handleFieldChange(a.id, 'is_active', e.target.checked)}
+                              />
+                              <span style={{ fontSize: '13px', fontWeight: 500, color: a.is_active ? '#8b5cf6' : 'rgba(255, 255, 255, 0.4)' }}>
+                                {a.is_active ? 'Active (Displaying in rotation)' : 'Inactive (Hidden)'}
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Add button */}
+                      <div className={styles.announcementAddRow}>
+                        <button type="button" onClick={handleAddAnnouncement} className={styles.addBtn}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                          Add Announcement
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.actions}>
+                  <button 
+                    type="submit" 
+                    className={styles.saveButton}
+                    disabled={isSaving || loadingAnnouncements}
+                  >
+                    {isSaving ? 'Saving Announcements...' : 'Save Announcements'}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </div>
