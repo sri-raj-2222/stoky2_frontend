@@ -38,6 +38,12 @@ export default function AdminSettingsPage() {
   const [originalAnnouncements, setOriginalAnnouncements] = useState<any[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
 
+  // Slideshow Tab State
+  const [slides, setSlides] = useState<any[]>([]);
+  const [originalSlides, setOriginalSlides] = useState<any[]>([]);
+  const [loadingSlides, setLoadingSlides] = useState(false);
+  const [slidesError, setSlidesError] = useState(false);
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -63,9 +69,36 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // Load slides from database
+  const loadSlides = async () => {
+    setLoadingSlides(true);
+    setSlidesError(false);
+    try {
+      const { data, error } = await supabase
+        .from('hero_slides')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setSlides(data || []);
+      setOriginalSlides(data || []);
+    } catch (err: any) {
+      console.error('Failed to load slides:', err);
+      if (err?.code === '42P01') {
+        setSlidesError(true);
+      } else {
+        showToast('Failed to load slides from database.', 'error');
+      }
+    } finally {
+      setLoadingSlides(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'announcements') {
       loadAnnouncements();
+    } else if (activeTab === 'slideshow') {
+      loadSlides();
     }
   }, [activeTab]);
 
@@ -174,6 +207,87 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleAddSlide = (url = '/images/tshirt-black.png') => {
+    const newSlide = {
+      id: generateUUID(),
+      image_url: url,
+      sort_order: slides.length + 1
+    };
+    setSlides([...slides, newSlide]);
+  };
+
+  const handleDeleteSlide = (id: string) => {
+    setSlides(slides.filter(s => s.id !== id));
+  };
+
+  const handleMoveSlideUp = (index: number) => {
+    if (index === 0) return;
+    const updated = [...slides];
+    const temp = updated[index];
+    updated[index] = updated[index - 1];
+    updated[index - 1] = temp;
+    setSlides(updated);
+  };
+
+  const handleMoveSlideDown = (index: number) => {
+    if (index === slides.length - 1) return;
+    const updated = [...slides];
+    const temp = updated[index];
+    updated[index] = updated[index + 1];
+    updated[index + 1] = temp;
+    setSlides(updated);
+  };
+
+  const handleSlideUrlChange = (id: string, value: string) => {
+    setSlides(slides.map(s => s.id === id ? { ...s, image_url: value } : s));
+  };
+
+  const handleSaveSlides = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      // 1. Determine deleted IDs
+      const currentIds = slides.map(s => s.id);
+      const deletedIds = originalSlides
+        .filter(os => !currentIds.includes(os.id))
+        .map(os => os.id);
+
+      // 2. Perform deletions
+      if (deletedIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('hero_slides')
+          .delete()
+          .in('id', deletedIds);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // 3. Perform upserts
+      const upsertPayload = slides.map((s, index) => ({
+        id: s.id,
+        image_url: s.image_url,
+        sort_order: index + 1
+      }));
+
+      if (upsertPayload.length > 0) {
+        const { error: upsertError } = await supabase
+          .from('hero_slides')
+          .upsert(upsertPayload);
+
+        if (upsertError) throw upsertError;
+      }
+
+      showToast('Hero slideshow updated successfully!');
+      await loadSlides();
+    } catch (err: any) {
+      console.error('Failed to save slides:', err);
+      showToast(`Failed to save: ${err.message || err}`, 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -250,6 +364,15 @@ export default function AdminSettingsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
               </svg>
               Announcements
+            </button>
+            <button 
+              className={`${styles.navItem} ${activeTab === 'slideshow' ? styles.activeNavItem : ''}`}
+              onClick={() => setActiveTab('slideshow')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '18px', height: '18px' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" />
+              </svg>
+              Hero Slideshow
             </button>
           </aside>
 
@@ -573,6 +696,195 @@ export default function AdminSettingsPage() {
                     disabled={isSaving || loadingAnnouncements}
                   >
                     {isSaving ? 'Saving Announcements...' : 'Save Announcements'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {activeTab === 'slideshow' && (
+              <form onSubmit={handleSaveSlides}>
+                <div className={styles.section}>
+                  <div className={styles.sectionTitle}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: '18px', height: '18px', color: '#8b5cf6' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" />
+                    </svg>
+                    Hero Slideshow Configuration
+                  </div>
+
+                  <p style={{ fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '24px', lineHeight: '1.5' }}>
+                    Manage the slides displayed in the main Hero slideshow on the homepage. You can choose from pre-defined local T-Shirt images, or insert custom image URLs.
+                  </p>
+
+                  {slidesError ? (
+                    <div style={{ padding: '24px', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.04)', color: '#f87171', fontSize: '14px', lineHeight: '1.6' }}>
+                      <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" />
+                        </svg>
+                        Supabase Table Not Found
+                      </div>
+                      <p style={{ margin: '0 0 16px 0', color: 'rgba(255, 255, 255, 0.6)', fontSize: '13px' }}>
+                        The <code>hero_slides</code> table does not exist in your Supabase database yet. Run the following SQL query in your Supabase dashboard SQL Editor to create it:
+                      </p>
+                      <pre style={{ background: '#050505', border: '1px solid rgba(255,255,255,0.1)', padding: '16px', borderRadius: '8px', fontSize: '12px', overflowX: 'auto', color: '#e5e7eb', fontFamily: 'monospace', margin: '0 0 16px 0' }}>
+{`CREATE TABLE public.hero_slides (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  image_url TEXT NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.hero_slides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow read hero_slides for anyone" ON public.hero_slides FOR SELECT USING (true);
+CREATE POLICY "Allow write hero_slides for admin" ON public.hero_slides FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'garapatisurya07@gmail.com');`}
+                      </pre>
+                      <button 
+                        type="button" 
+                        onClick={loadSlides} 
+                        className={styles.addBtn}
+                        style={{ border: '1px solid rgba(255, 255, 255, 0.15)', background: 'transparent', color: '#ffffff' }}
+                      >
+                        Retry Connection
+                      </button>
+                    </div>
+                  ) : loadingSlides ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0', color: 'rgba(255, 255, 255, 0.3)' }}>
+                      <span>Loading hero slides...</span>
+                    </div>
+                  ) : slides.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: 'rgba(255, 255, 255, 0.3)' }}>
+                      <p style={{ margin: '0 0 16px 0', fontSize: '13.5px' }}>No slides defined yet.</p>
+                      <button type="button" onClick={() => handleAddSlide('/images/tshirt-black.png')} className={styles.addBtn} style={{ margin: '0 auto' }}>
+                        Create First Slide
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      {slides.map((s, index) => {
+                        const isPreset = ['/images/tshirt-black.png', '/images/tshirt-white.png', '/images/tshirt-grey.png', '/images/tshirt-navy.png', '/images/tshirt-olive.png', '/images/tshirt-burgundy.png'].includes(s.image_url);
+                        return (
+                          <div key={s.id} className={styles.announcementCard}>
+                            <div className={styles.announcementCardHeader}>
+                              <span className={styles.announcementTitle}>
+                                Slide #{index + 1}
+                              </span>
+                              <div className={styles.announcementControls}>
+                                {/* Move Up */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveSlideUp(index)}
+                                  disabled={index === 0}
+                                  className={styles.iconButton}
+                                  title="Move Up"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="18 15 12 9 6 15"></polyline>
+                                  </svg>
+                                </button>
+                                
+                                {/* Move Down */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveSlideDown(index)}
+                                  disabled={index === slides.length - 1}
+                                  className={styles.iconButton}
+                                  title="Move Down"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                  </svg>
+                                </button>
+
+                                {/* Delete */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSlide(s.id)}
+                                  className={`${styles.iconButton} ${styles.deleteBtn}`}
+                                  title="Delete"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Image Selector / Input */}
+                            <div className={styles.formGroup} style={{ marginBottom: '16px' }}>
+                              <label className={styles.label}>Select Slide Image *</label>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <select
+                                  className={styles.select}
+                                  value={isPreset ? s.image_url : 'custom'}
+                                  onChange={(e) => {
+                                    if (e.target.value !== 'custom') {
+                                      handleSlideUrlChange(s.id, e.target.value);
+                                    } else {
+                                      handleSlideUrlChange(s.id, '');
+                                    }
+                                  }}
+                                >
+                                  <option value="/images/tshirt-black.png">Black T-Shirt (Local Preset)</option>
+                                  <option value="/images/tshirt-white.png">White T-Shirt (Local Preset)</option>
+                                  <option value="/images/tshirt-grey.png">Grey T-Shirt (Local Preset)</option>
+                                  <option value="/images/tshirt-navy.png">Navy T-Shirt (Local Preset)</option>
+                                  <option value="/images/tshirt-olive.png">Olive T-Shirt (Local Preset)</option>
+                                  <option value="/images/tshirt-burgundy.png">Burgundy T-Shirt (Local Preset)</option>
+                                  <option value="custom">Custom Image URL...</option>
+                                </select>
+
+                                {!isPreset && (
+                                  <input
+                                    type="text"
+                                    required
+                                    value={s.image_url}
+                                    placeholder="e.g. https://example.com/image.jpg"
+                                    onChange={(e) => handleSlideUrlChange(s.id, e.target.value)}
+                                    className={styles.input}
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Quick Preview Thumbnail */}
+                            {s.image_url && (
+                              <div style={{ marginTop: '12px', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', overflow: 'hidden', width: '120px', height: '120px', position: 'relative', background: '#111' }}>
+                                <img
+                                  src={s.image_url}
+                                  alt="Slide Preview"
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Add button */}
+                      <div className={styles.announcementAddRow}>
+                        <button type="button" onClick={() => handleAddSlide('/images/tshirt-black.png')} className={styles.addBtn}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                          Add Slide Image
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.actions}>
+                  <button 
+                    type="submit" 
+                    className={styles.saveButton}
+                    disabled={isSaving || loadingSlides || slidesError}
+                  >
+                    {isSaving ? 'Saving Slideshow...' : 'Save Slideshow'}
                   </button>
                 </div>
               </form>

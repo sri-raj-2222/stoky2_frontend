@@ -133,6 +133,23 @@ function AppleIcon() {
   );
 }
 
+function ArrowLeftIcon() {
+  return (
+    <svg
+      className={styles.backIcon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
+}
+
 /* ─── Validation helpers ───────────────────────────────────── */
 
 function validateName(v: string): { status: FieldStatus; error?: string } {
@@ -318,6 +335,12 @@ export default function RegisterPage() {
 
   return (
     <main className={styles.registerPage}>
+      {/* Back button to landing page */}
+      <Link href="/" className={styles.backButton}>
+        <ArrowLeftIcon />
+        <span>Back</span>
+      </Link>
+
       <div className={styles.card}>
         {/* Brand wordmark */}
         <div className={styles.brand}>STOKY</div>
